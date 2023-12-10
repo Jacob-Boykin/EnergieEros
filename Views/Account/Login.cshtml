@@ -1,0 +1,23 @@
+﻿@model EnergieEros.Models.LoginViewModel
+
+<form asp-action="Login" method="post">
+    @if (!string.IsNullOrEmpty(ViewData["UsernameError"] as string))
+    {
+        <span class="text-danger">@ViewData["UsernameError"]</span>
+    }
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    <div>
+        <label asp-for="RememberMe"></label>
+        <input asp-for="RememberMe" />
+    </div>
+    <button type="submit">Login</button>
+</form>

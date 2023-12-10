@@ -1,0 +1,59 @@
+﻿@{
+    ViewData["Title"] = "Chat Interface";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Interface</title>
+    <style>
+        /* Your CSS styles for the chat interface */
+        /* Style the chat container, messages, user input, etc. */
+        /* Add your CSS styles here */
+    </style>
+    <script src="~/js/site.js"></script>
+</head>
+<body>
+    <div class="chat-container">
+        <div id="chat-messages">
+            <!-- Messages will be displayed here -->
+            <div class="chat-message">Welcome to the chat!</div>
+        </div>
+        <div>
+            <input type="text" id="user-input" class="user-input" placeholder="Type your message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        async function sendMessage() {
+            const userInput = document.getElementById('user-input').value;
+
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    Content: userInput
+                })
+            });
+
+            const data = await response.json();
+            console.log(data);
+            displayMessage(data.reply);
+            document.getElementById('user-input').value = ''; // Clear the input field
+        }
+
+        function displayMessage(message) {
+            const chatMessages = document.getElementById('chat-messages');
+            const newMessage = document.createElement('div');
+            newMessage.classList.add('chat-message');
+            newMessage.textContent = message; // Update to use the received message
+            chatMessages.appendChild(newMessage);
+        }
+
+
+    </script>
+</body>
+</html>

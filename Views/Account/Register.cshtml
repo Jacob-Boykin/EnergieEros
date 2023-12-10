@@ -1,0 +1,73 @@
+﻿@model EnergieEros.Models.RegisterViewModel
+
+<form asp-area="" asp-controller="Home" asp-action="Register" method="post">
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" id="Password" />
+        <span asp-validation-for="Password"></span>
+        <span id="passwordCriteriaMessage" style="color: red;"></span>
+    </div>
+    <div>
+        <label asp-for="ConfirmPassword"></label>
+        <input asp-for="ConfirmPassword" />
+        <span asp-validation-for="ConfirmPassword"></span>
+    </div>
+    <div>
+        <label>
+            <input type="checkbox" asp-for="IsAdmin" />
+            Are you registering as an admin?
+        </label>
+    </div>
+    <button type="submit">Register</button>
+</form>
+
+@if (!string.IsNullOrEmpty(ViewBag.SuccessMessage) || !string.IsNullOrEmpty(ViewBag.ErrorMessage))
+{
+    <script>
+        window.onload = function () {
+        @if (!string.IsNullOrEmpty(ViewBag.SuccessMessage))
+        {
+            <text>alert('@ViewBag.SuccessMessage'); </text>
+        }
+        @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+        {
+            <text>alert('@ViewBag.ErrorMessage'); </text>
+        }
+                };
+    </script>
+}
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('#Password').on('input', function () {
+            var password = $(this).val();
+            var isValid = true;
+
+            if (password.length < 6) {
+                isValid = false;
+            }
+            if (!/\d/.test(password)) {
+                isValid = false;
+            }
+            if (!/[A-Z]/.test(password)) {
+                isValid = false;
+            }
+            if (!/\W/.test(password)) {
+                isValid = false;
+            }
+
+            if (!isValid) {
+                $('#passwordCriteriaMessage').text("Password requirements: at least 6 characters, one digit, one uppercase letter, and one non-alphanumeric character.");
+            } else {
+                $('#passwordCriteriaMessage').text("");
+            }
+        });
+    });
+</script>
