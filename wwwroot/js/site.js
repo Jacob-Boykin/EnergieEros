@@ -26,6 +26,7 @@
 
 async function sendMessageToChatAPI(message) {
     try {
+        console.log(JSON.stringify({ content: message }))
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
@@ -39,6 +40,7 @@ async function sendMessageToChatAPI(message) {
         throw error;
     }
 }
+
 
 // Fetch products from the API endpoint
 async function fetchProducts() {
