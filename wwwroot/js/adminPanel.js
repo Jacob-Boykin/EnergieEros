@@ -1,6 +1,8 @@
 function viewOrders() {
     hideProductsButtons();
-    fetch('/api/orders')
+    document.getElementById('productsTable').innerHTML = '';
+    document.getElementById('usersTable').innerHTML = '';
+    fetch('/admin/orders')
         .then(response => {
             if (response.ok) {
                 const contentType = response.headers.get('content-type');
@@ -29,29 +31,35 @@ function displayOrders(orders) {
         return;
     }
 
-    console.log('Orders:', orders);
-
-    ordersDiv.innerHTML = orders.map(order => {
-        return `
-            <div class="order">
-                <h2>Order #${order.orderId}</h2>
-                <p>Order Date: ${order.orderDate}</p>
-                <p>Order Total: ${order.total}</p>
-                <button onclick="editOrder(${order.orderId})">Edit</button>
-                <button onclick="deleteOrder(${order.orderId})">Delete</button>
-            </div>
+    let table = '<table><tr><th>Order ID</th><th>Order Date</th><th>Total</th><th>Actions</th></tr>';
+    orders.forEach(order => {
+        table += `
+            <tr>
+                <td>${order.orderId}</td>
+                <td>${order.orderDate}</td>
+                <td>${order.total}</td>
+                <td>
+                    <button onclick="editOrder(${order.orderId})">Edit</button>
+                    <button onclick="deleteOrder(${order.orderId})">Delete</button>
+                </td>
+            </tr>
         `;
-    }).join('');
+    });
+    table += '</table>';
+    ordersDiv.innerHTML = table;
 }
 
 function viewProducts() {
     showProductsButtons();
-    fetch('/api/products')
+    document.getElementById('ordersTable').innerHTML = '';
+    document.getElementById('usersTable').innerHTML = '';
+    fetch('/admin/products')
         .then(response => {
-            if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
                 return response.json();
             } else {
-                throw new Error('Network response was not ok');
+                throw new Error('Response was not JSON');
             }
         })
         .then(products => {
@@ -62,7 +70,7 @@ function viewProducts() {
 }
 
 function displayProducts(products) {
-    const productsDiv = document.getElementById('products');
+    const productsDiv = document.getElementById('productsTable');
     productsDiv.innerHTML = ''; // Clear existing content
 
     if (products.length === 0) {
@@ -70,23 +78,31 @@ function displayProducts(products) {
         return;
     }
 
-    console.log('Products:', products);
-
-    productsDiv.innerHTML = products.map(product => {
-        return `
-            <div class="product">
-                <img src="${product.imageUrl}" alt="${product.name}">
-                <h2>${product.name}</h2>
-                <p>${product.description}</p>
-                <span class="price">${product.price}</span>
-            </div>
+    let table = '<table><tr><th>Image</th><th>Name</th><th>Description</th><th>Price</th><th>Actions</th></tr>';
+    products.forEach(product => {
+        table += `
+            <tr>
+                <td><img src="${product.imageUrl}" alt="${product.name}" style="width:50px;height:50px;"></td>
+                <td>${product.name}</td>
+                <td>${product.description}</td>
+                <td>${product.price}</td>
+                <td>
+                    <button onclick="editProduct(${product.productId})">Edit</button>
+                    <button onclick="deleteProduct(${product.productId})">Delete</button>
+                </td>
+            </tr>
         `;
-    }).join('');
+    });
+    table += '</table>';
+    productsDiv.innerHTML = table;
 }
+
 
 function viewUsers() {
     hideProductsButtons();
-    fetch('/api/users')
+    document.getElementById('ordersTable').innerHTML = '';
+    document.getElementById('productsTable').innerHTML = '';
+    fetch('/admin/users')
         .then(response => {
             if (response.ok) {
                 return response.json();
@@ -102,7 +118,7 @@ function viewUsers() {
 }
 
 function displayUsers(users) {
-    const usersDiv = document.getElementById('users');
+    const usersDiv = document.getElementById('usersTable');
     usersDiv.innerHTML = ''; // Clear existing content
 
     if (users.length === 0) {
@@ -110,18 +126,21 @@ function displayUsers(users) {
         return;
     }
 
-    console.log('Users:', users);
-
-    usersDiv.innerHTML = users.map(user => {
-        return `
-            <div class="user">
-                <h2>${user.id}</h2>
-                <p>${user.email}</p>
-                <button onclick="editUser(${user.userId})">Edit</button>
-                <button onclick="deleteUser(${user.userId})">Delete</button>
-            </div>
+    let table = '<table><tr><th>User ID</th><th>Email</th><th>Actions</th></tr>';
+    users.forEach(user => {
+        table += `
+            <tr>
+                <td>${user.id}</td>
+                <td>${user.email}</td>
+                <td>
+                    <button onclick="editUser('${user.id}')">Edit</button>
+                    <button onclick="deleteUser('${user.id}')">Delete</button>
+                </td>
+            </tr>
         `;
-    }).join('');
+    });
+    table += '</table>';
+    usersDiv.innerHTML = table;
 }
 
 function showProductsButtons() {
@@ -133,7 +152,7 @@ function hideProductsButtons() {
 }
 
 function deleteUser(userId) {
-    fetch(`/api/users/delete/${userId}`, {
+    fetch(`/admin/users/delete/${userId}`, {
         method: 'DELETE'
     })
         .then(response => {
@@ -147,23 +166,33 @@ function deleteUser(userId) {
 }
 
 function editUser(userId) {
-    fetch(`/api/users/${userId}`)
+    fetch(`/admin/users/${userId}`)
         .then(response => {
             if (response.ok) {
-                return response.json();
+                if (response.headers.get('content-type').includes('application/json')) {
+                    return response.json();
+                } else {
+                    throw new Error('Response was not in JSON format');
+                }
             } else {
                 throw new Error('Network response was not ok');
             }
         })
         .then(user => {
-            console.log('User:', user);
-            displayUserForm(user);
+            // Fill the form with user data
+            console.log(user);
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editEmail').value = user.email;
+            document.getElementById('editIsAdmin').value = user.role;
+            document.getElementById('editPassword').value = user.password;    
+            // Display the form
+            document.getElementById('userEditModal').style.display = 'block';
         })
         .catch(error => console.error('Error fetching user:', error));
 }
 
 function deleteOrder(orderId) {
-    fetch(`/api/orders/delete/${orderId}`, {
+    fetch(`/admin/orders/delete/${orderId}`, {
         method: 'DELETE'
     })
         .then(response => {
@@ -177,7 +206,7 @@ function deleteOrder(orderId) {
 }
 
 function editOrder(orderId) {
-    fetch(`/api/orders/${orderId}`)
+    fetch(`/admin/orders/${orderId}`)
         .then(response => {
             if (response.ok) {
                 return response.json();
@@ -186,14 +215,18 @@ function editOrder(orderId) {
             }
         })
         .then(order => {
-            console.log('Order:', order);
-            displayOrderForm(order);
+            // Fill the form with order data
+            document.getElementById('editOrderId').value = order.orderId;
+            document.getElementById('editOrderDate').value = order.orderDate;
+            document.getElementById('editTotal').value = order.total;
+            // Display the form
+            document.getElementById('orderEditModal').style.display = 'block';
         })
         .catch(error => console.error('Error fetching order:', error));
 }
 
 function deleteProduct(productId) {
-    fetch(`/api/products/delete/${productId}`, {
+    fetch(`/admin/products/delete/${productId}`, {
         method: 'DELETE'
     })
         .then(response => {
@@ -207,7 +240,7 @@ function deleteProduct(productId) {
 }
 
 function editProduct(productId) {
-    fetch(`/api/products/${productId}`)
+    fetch(`/admin/products/${productId}`)
         .then(response => {
             if (response.ok) {
                 return response.json();
@@ -216,159 +249,204 @@ function editProduct(productId) {
             }
         })
         .then(product => {
-            console.log('Product:', product);
-            displayProductForm(product);
+            // Fill the form with product data
+            document.getElementById('editProductId').value = product.productId;
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductDescription').value = product.description;
+            document.getElementById('editProductPrice').value = product.price;
+            document.getElementById('editProductImageUrl').value = product.imageUrl;
+            // Display the form
+            document.getElementById('productEditModal').style.display = 'block';
         })
         .catch(error => console.error('Error fetching product:', error));
 }
 
 function addProduct() {
-    displayProductForm();
+    // Clear the form
+    document.getElementById('editProductId').value = '';
+    document.getElementById('editProductName').value = '';
+    document.getElementById('editProductDescription').value = '';
+    document.getElementById('editProductPrice').value = '';
+    document.getElementById('editProductImageUrl').value = '';
+    // Display the form
+    document.getElementById('productEditModal').style.display = 'block';
 }
 
-function displayProductForm(product) {
-    const productFormDiv = document.getElementById('productForm');
-    productFormDiv.innerHTML = `
-        <h2>Product</h2>
-        <form onsubmit="saveProduct(event)">
-            <input type="hidden" id="productId" name="productId" value="${product ? product.productId : ''}" />
-            <label for="name">Name</label>
-            <input type="text" id="name" name="name" value="${product ? product.name : ''}" required />
-            <label for="description">Description</label>
-            <input type="text" id="description" name="description" value="${product ? product.description : ''}" required />
-            <label for="price">Price</label>
-            <input type="number" id="price" name="price" value="${product ? product.price : ''}" required />
-            <label for="imageUrl">Image URL</label>
-            <input type="text" id="imageUrl" name="imageUrl" value="${product ? product.imageUrl : ''}" required />
-            <input type="submit" value="Save" />
-        </form>
-    `;
+function closeProductModal() {
+    document.getElementById('productEditModal').style.display = 'none';
 }
 
-function saveProduct(event) {
+function closeOrderModal() {
+    document.getElementById('orderEditModal').style.display = 'none';
+}
+
+function closeUserModal() {
+    document.getElementById('userEditModal').style.display = 'none';
+}
+
+document.getElementById('productEditForm').addEventListener('submit', function (event) {
     event.preventDefault();
 
-    const productId = document.getElementById('productId').value;
-    const name = document.getElementById('name').value;
-    const description = document.getElementById('description').value;
-    const price = document.getElementById('price').value;
-    const imageUrl = document.getElementById('imageUrl').value;
+    const productId = document.getElementById('editProductId').value;
+    const productName = document.getElementById('editProductName').value;
+    const productDescription = document.getElementById('editProductDescription').value;
+    const productPrice = document.getElementById('editProductPrice').value;
+    const productImageUrl = document.getElementById('editProductImageUrl').value;
 
-    const product = {
+    const productData = {
         productId: productId,
-        name: name,
-        description: description,
-        price: price,
-        imageUrl: imageUrl
+        name: productName,
+        description: productDescription,
+        price: productPrice,
+        imageUrl: productImageUrl
     };
 
-    fetch('/api/products', {
-        method: 'POST',
+    fetch('/admin/products', {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(product)
+        body: JSON.stringify(productData)
     })
         .then(response => {
             if (response.ok) {
+                // Close the modal
+                closeProductModal();
+                // Refresh the products view
                 viewProducts();
             } else {
                 throw new Error('Network response was not ok');
             }
         })
         .catch(error => console.error('Error saving product:', error));
-}
+});
 
-function displayUserForm(user) {
-    const userFormDiv = document.getElementById('userForm');
-    userFormDiv.innerHTML = `
-        <h2>User</h2>
-        <form onsubmit="saveUser(event)">
-            <input type="hidden" id="userId" name="userId" value="${user ? user.userId : ''}" />
-            <label for="firstName">First Name</label>
-            <input type="text" id="firstName" name="firstName" value="${user ? user.firstName : ''}" required />
-            <label for="lastName">Last Name</label>
-            <input type="text" id="lastName" name="lastName" value="${user ? user.lastName : ''}" required />
-            <label for="email">Email</label>
-            <input type="text" id="email" name="email" value="${user ? user.email : ''}" required />
-            <input type="submit" value="Save" />
-        </form>
-    `;
-}
-
-function saveUser(event) {
+document.getElementById('orderEditForm').addEventListener('submit', function (event) {
     event.preventDefault();
 
-    const userId = document.getElementById('userId').value;
-    const firstName = document.getElementById('firstName').value;
-    const lastName = document.getElementById('lastName').value;
-    const email = document.getElementById('email').value;
+    const orderId = document.getElementById('editOrderId').value;
+    const orderDate = document.getElementById('editOrderDate').value;
+    const total = document.getElementById('editTotal').value;
 
-    const user = {
-        userId: userId,
-        firstName: firstName,
-        lastName: lastName,
-        email: email
-    };
-
-    fetch('/api/users', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(user)
-    })
-        .then(response => {
-            if (response.ok) {
-                viewUsers();
-            } else {
-                throw new Error('Network response was not ok');
-            }
-        })
-        .catch(error => console.error('Error saving user:', error));
-}
-
-function displayOrderForm(order) {
-    const orderFormDiv = document.getElementById('orderForm');
-    orderFormDiv.innerHTML = `
-        <h2>Order</h2>
-        <form onsubmit="saveOrder(event)">
-            <input type="hidden" id="orderId" name="orderId" value="${order ? order.orderId : ''}" />
-            <label for="orderDate">Order Date</label>
-            <input type="text" id="orderDate" name="orderDate" value="${order ? order.orderDate : ''}" required />
-            <label for="total">Total</label>
-            <input type="text" id="total" name="total" value="${order ? order.total : ''}" required />
-            <input type="submit" value="Save" />
-        </form>
-    `;
-}
-
-function saveOrder(event) {
-    event.preventDefault();
-
-    const orderId = document.getElementById('orderId').value;
-    const orderDate = document.getElementById('orderDate').value;
-    const total = document.getElementById('total').value;
-
-    const order = {
+    const orderData = {
         orderId: orderId,
         orderDate: orderDate,
         total: total
     };
 
-    fetch('/api/orders', {
-        method: 'POST',
+    fetch('/admin/orders', {
+        method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(order)
+        body: JSON.stringify(orderData)
     })
         .then(response => {
             if (response.ok) {
+                // Close the modal
+                closeOrderModal();
+                // Refresh the orders view
                 viewOrders();
             } else {
                 throw new Error('Network response was not ok');
             }
         })
         .catch(error => console.error('Error saving order:', error));
+});
+
+document.getElementById('userEditForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const userId = document.getElementById('editUserId').value;
+    const email = document.getElementById('editEmail').value;
+    const role = document.getElementById('editIsAdmin').value;
+    const password = document.getElementById('editPassword').value;
+
+    const userData = {
+        email: email,
+        role: role,
+        reversiblePassword: password
+    };
+
+    fetch('/admin/users/${userId}', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userData)
+    })
+        .then(response => {
+            if (response.ok) {
+                // Close the modal
+                closeUserModal();
+                // Refresh the users view
+                viewUsers();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .catch(error => console.error('Error saving user:', error));
+});
+
+function closeErrorModal() {
+    document.getElementById('errorModal').style.display = 'none';
 }
+
+function closeSuccessModal() {
+    document.getElementById('successModal').style.display = 'none';
+}
+
+function generateReport() {
+    const reportType = document.getElementById("reportType").value;
+    fetch(`/api/reports/${reportType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                // Display error modal
+                document.getElementById('errorModal').style.display = 'block';
+                document.getElementById('errorModalMessage').innerText = data.error;
+            } else {
+                // Process and display report data
+                const reportOutputDiv = document.getElementById('reportOutput');
+                reportOutputDiv.innerHTML = createTableFromData(data);
+
+                // Optionally, display success modal
+                document.getElementById('successModal').style.display = 'block';
+                document.getElementById('successModalMessage').innerText = 'Report generated successfully';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching report:', error);
+            // Display error modal
+            document.getElementById('errorModal').style.display = 'block';
+            document.getElementById('errorModalMessage').innerText = 'Error generating report';
+        });
+}
+
+function createTableFromData(data) {
+    // Assuming 'data' is an array of objects
+    if (data.length === 0) {
+        return '<p>No data found for this report</p>';
+    }
+
+    let table = '<table>';
+    // Create header row
+    table += '<tr>';
+    Object.keys(data[0]).forEach(key => {
+        table += `<th>${key}</th>`;
+    });
+    table += '</tr>';
+
+    // Create data rows
+    data.forEach(item => {
+        table += '<tr>';
+        Object.values(item).forEach(value => {
+            table += `<td>${value}</td>`;
+        });
+        table += '</tr>';
+    });
+
+    table += '</table>';
+    return table;
+}
+
