@@ -166,30 +166,29 @@ function deleteUser(userId) {
 }
 
 function editUser(userId) {
-    fetch(`/admin/users/${userId}`)
+    fetch(`/admin/user/${userId}`)
         .then(response => {
             if (response.ok) {
-                if (response.headers.get('content-type').includes('application/json')) {
-                    return response.json();
-                } else {
-                    throw new Error('Response was not in JSON format');
-                }
+                return response.json();
             } else {
                 throw new Error('Network response was not ok');
             }
         })
         .then(user => {
-            // Fill the form with user data
-            console.log(user);
-            document.getElementById('editUserId').value = user.id;
-            document.getElementById('editEmail').value = user.email;
-            document.getElementById('editIsAdmin').value = user.role;
-            document.getElementById('editPassword').value = user.password;    
-            // Display the form
-            document.getElementById('userEditModal').style.display = 'block';
+            if (user) {
+                document.getElementById('editUserEmail').value = user.email || '';
+                // Assuming 'role' and 'reversiblePassword' are correct property names
+                document.getElementById('editUserIsAdmin').value = user.role || '';
+                document.getElementById('editUserPassword').value = user.reversiblePassword || '';
+                document.getElementById('userEditModal').style.display = 'block';
+            } else {
+                console.error('User object is empty');
+                throw new Error('User object is empty');
+            }
         })
         .catch(error => console.error('Error fetching user:', error));
 }
+
 
 function deleteOrder(orderId) {
     fetch(`/admin/orders/delete/${orderId}`, {
@@ -255,21 +254,32 @@ function editProduct(productId) {
             document.getElementById('editProductDescription').value = product.description;
             document.getElementById('editProductPrice').value = product.price;
             document.getElementById('editProductImageUrl').value = product.imageUrl;
-            // Display the form
-            document.getElementById('productEditModal').style.display = 'block';
+            openEditProductModal();
         })
         .catch(error => console.error('Error fetching product:', error));
 }
 
 function addProduct() {
-    // Clear the form
+    openAddProductModal();
+}
+
+function openEditProductModal() {
+    currentOperation = 'edit';
+    document.getElementById('productModal').style.display = 'block';
+}
+
+function openAddProductModal() {
+    currentOperation = 'add';
+    clearProductForm();
+    document.getElementById('productModal').style.display = 'block';
+}
+
+function clearProductForm() {
     document.getElementById('editProductId').value = '';
     document.getElementById('editProductName').value = '';
     document.getElementById('editProductDescription').value = '';
     document.getElementById('editProductPrice').value = '';
     document.getElementById('editProductImageUrl').value = '';
-    // Display the form
-    document.getElementById('productEditModal').style.display = 'block';
 }
 
 function closeProductModal() {
@@ -284,9 +294,18 @@ function closeUserModal() {
     document.getElementById('userEditModal').style.display = 'none';
 }
 
-document.getElementById('productEditForm').addEventListener('submit', function (event) {
+document.getElementById('productForm').addEventListener('submit', function (event) {
     event.preventDefault();
+    const productData = collectProductFormData(); // Collect data from form
 
+    if (currentOperation === 'add') {
+        addProduct(productData);
+    } else if (currentOperation === 'edit') {
+        updateProduct(productData);
+    }
+});
+
+function collectProductFormData() {
     const productId = document.getElementById('editProductId').value;
     const productName = document.getElementById('editProductName').value;
     const productDescription = document.getElementById('editProductDescription').value;
@@ -294,14 +313,41 @@ document.getElementById('productEditForm').addEventListener('submit', function (
     const productImageUrl = document.getElementById('editProductImageUrl').value;
 
     const productData = {
-        productId: productId,
-        name: productName,
-        description: productDescription,
-        price: productPrice,
-        imageUrl: productImageUrl
-    };
+            productId: productId,
+            name: productName,
+            description: productDescription,
+            price: productPrice,
+            imageUrl: productImageUrl
+        };
 
-    fetch('/admin/products', {
+    return productData;
+}
+
+function addProduct(productData) {
+    // POST request to add a new product
+fetch('/api/products/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(productData)
+    })
+        .then(response => {
+            if (response.ok) {
+                // Close the modal
+                closeProductModal();
+                // Refresh the products view
+                viewProducts();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .catch(error => console.error('Error saving product:', error));
+}
+
+function updateProduct(productData) {
+    // PUT request to update an existing product
+    fetch('/api/products/update', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
@@ -319,7 +365,8 @@ document.getElementById('productEditForm').addEventListener('submit', function (
             }
         })
         .catch(error => console.error('Error saving product:', error));
-});
+}
+
 
 document.getElementById('orderEditForm').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -358,17 +405,17 @@ document.getElementById('userEditForm').addEventListener('submit', function (eve
     event.preventDefault();
 
     const userId = document.getElementById('editUserId').value;
-    const email = document.getElementById('editEmail').value;
-    const role = document.getElementById('editIsAdmin').value;
-    const password = document.getElementById('editPassword').value;
+    const email = document.getElementById('editUserEmail').value;
+    const password = document.getElementById('editUserPassword').value;
+    const role = document.getElementById('editUserIsAdmin').value;
 
     const userData = {
         email: email,
-        role: role,
-        reversiblePassword: password
+        reversiblePassword: password,
+        role: role
     };
 
-    fetch('/admin/users/${userId}', {
+    fetch(`/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json'
@@ -385,7 +432,12 @@ document.getElementById('userEditForm').addEventListener('submit', function (eve
                 throw new Error('Network response was not ok');
             }
         })
-        .catch(error => console.error('Error saving user:', error));
+        .catch(error => {
+            console.error('Error updating user:', error);
+            // Display error modal  
+            document.getElementById('errorModal').style.display = 'block';
+            document.getElementById('errorModalMessage').innerText = 'Error updating user';
+        });
 });
 
 function closeErrorModal() {

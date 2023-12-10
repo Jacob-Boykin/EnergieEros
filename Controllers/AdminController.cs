@@ -67,14 +67,14 @@ namespace EnergieEros.Controllers
             return Ok(product);
         }
 
-        [HttpGet("/admin/users/{id}")]
+        [HttpGet("/admin/user/{id}")]
         public async Task<IActionResult> GetUserById(string id)
         {
             ApplicationUser user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
                 System.Diagnostics.Debug.WriteLine("User not found");
-                return NotFound();  // Or some other appropriate response
+                return NotFound(new { Message = "User not found" });  // Or some other appropriate response
             }
             return Ok(user);
         }
@@ -110,6 +110,11 @@ namespace EnergieEros.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateUser(string userId, [FromBody] ApplicationUser user)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (user == null)
             {
                 return BadRequest("User is null");

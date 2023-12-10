@@ -83,8 +83,11 @@
                 <input type="text" id="editUserEmail" name="email" required />
                 <label for="editUserPassword">Password:</label>
                 <input type="text" id="editUserPassword" name="password" required />
-                <label for="editUserIsAdmin">IsAdmin:</label>
-                <input type="text" id="editUserIsAdmin" name="isAdmin" required />
+                <label for="editUserIsAdmin">Role:</label>
+                <select id="editUserIsAdmin" name="isAdmin" required>
+                    <option value="Admin">Admin</option>
+                    <option value="Customer">Customer</option>
+                </select>
                 <input type="submit" value="Save" />
             </form>
         </div>
