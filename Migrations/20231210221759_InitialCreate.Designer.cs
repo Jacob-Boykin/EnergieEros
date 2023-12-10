@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EnergieEros.Migrations
 {
     [DbContext(typeof(EnergieDbContext))]
-    [Migration("20231210203734_InitialCreate")]
+    [Migration("20231210221759_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
