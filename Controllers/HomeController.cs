@@ -2,9 +2,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.DiaSymReader;
-using System.Data.Entity;
+using System.Text;
+using System.Text.Json;
+
+
 
 
 
@@ -55,15 +56,53 @@ namespace EnergieEros.Controllers
             return View("~/Views/Account/Login.cshtml", model);
         }
 
+        private static SemaphoreSlim semaphore = new SemaphoreSlim(1); // Semaphore for controlling concurrency
+
         [Route("api/chat")]
         [HttpPost]
-        public IActionResult Chat([FromBody] ChatMessage message)
+        public async Task<IActionResult> Chat([FromBody] ChatMessage message, [FromQuery] int limit = 10)
         {
-            // Process the message here (e.g., interact with OpenAI API)
-            var replyMessage = $"Received: {message?.Content}";
+            try
+            {
+                await semaphore.WaitAsync(); // Wait until allowed to proceed (or wait in a queue)
 
-            return Json(new { reply = replyMessage });
+                var apiKey = "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"; // Replace with your OpenAI API key
+                var requestContent = new
+                {
+                    prompt = message?.Content,
+                    // Add any other parameters required by OpenAI API
+                };
+                var json = JsonSerializer.Serialize(requestContent);
+                var stringContent = new StringContent(json, Encoding.UTF8, "application/json");
+
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+
+                var response = await client.PostAsync("https://api.openai.com/v1/engines/davinci/completions", stringContent);
+                var responseString = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"Response Content: {responseString}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, "Error processing request to OpenAI API");
+                }
+
+                
+                var responseObject = JsonSerializer.Deserialize<OpenAIResponse>(responseString);
+
+                return Ok(new { replies = responseObject });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing chat message");
+                return StatusCode(500, "Internal server error");
+            }
+            finally
+            {
+                semaphore.Release(); // Release semaphore to allow the next request
+            }
         }
+
 
         public IActionResult Register()
         {

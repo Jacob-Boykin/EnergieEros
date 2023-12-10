@@ -23,7 +23,10 @@
             <input type="text" id="user-input" class="user-input" placeholder="Type your message...">
             <button onclick="sendMessage()">Send</button>
         </div>
+    <div class="disclaimer">
+        <p style="color: red;">This model is not trained. Responses may vary and are often confusing.</p>
     </div>
+
 
     <script>
         async function sendMessage() {
@@ -40,18 +43,39 @@
             });
 
             const data = await response.json();
-            console.log(data);
-            displayMessage(data.reply);
+            console.log('Received data:', data);
+            displayMessages(data.replies,userInput);
             document.getElementById('user-input').value = ''; // Clear the input field
         }
 
-        function displayMessage(message) {
+
+        function displayMessages(data, userInput) {
             const chatMessages = document.getElementById('chat-messages');
-            const newMessage = document.createElement('div');
-            newMessage.classList.add('chat-message');
-            newMessage.textContent = message; // Update to use the received message
-            chatMessages.appendChild(newMessage);
+            const replies = data.choices; // Extracting messages from the 'choices' array
+
+            replies.forEach((reply) => {
+                const newMessage = document.createElement('div');
+                newMessage.classList.add('chat-message');
+
+                const meText = document.createElement('span');
+                meText.textContent = `Me: ${userInput}`;
+                newMessage.appendChild(meText);
+
+                newMessage.appendChild(document.createElement('br')); // Line break
+
+                const aiText = document.createElement('span');
+                aiText.textContent = `AI: ${reply.text}`;
+                newMessage.appendChild(aiText);
+
+                chatMessages.appendChild(newMessage);
+            });
         }
+
+
+
+
+
+
 
 
     </script>
