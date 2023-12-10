@@ -40,6 +40,7 @@ async function sendMessageToChatAPI(message) {
     }
 }
 
+
 // Fetch products from the API endpoint
 async function fetchProducts() {
     try {
