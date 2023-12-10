@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace EnergieEros.Models
@@ -11,5 +12,7 @@ namespace EnergieEros.Models
 
         public int ProductId { get; set; } // Foreign key to Product
         public Product? Product { get; set; }
+
+
     }
 }

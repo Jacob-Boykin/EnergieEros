@@ -1,0 +1,12 @@
+Ignore specific files
+my_secret_file.txt
+logs/
+
+Ignore all files in a directory
+temp/*
+
+Ignore all .dll files
+*.dll
+
+Ignore all .exe files
+*.exe

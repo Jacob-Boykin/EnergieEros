@@ -1,19 +1,24 @@
 ﻿using EnergieEros.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace EnergieEros.Data
 {
-    public class EnergieDbContext : DbContext
+    public class EnergieDbContext : IdentityDbContext<ApplicationUser>
     {
         public EnergieDbContext(DbContextOptions<EnergieDbContext> options) : base(options)
         {
         }
 
         public DbSet<Product> Products { get; set; }
-        public DbSet<User> Users { get; set; }
         public DbSet<Order> Orders { get; set; }
-        // Other DbSet properties for your models
+        public DbSet<CartItem> CartItems { get; set; }
 
-        // Override methods and configurations as needed
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            // Configurations: specifying relationships, seeding initial data, etc.
+        }
     }
 }
