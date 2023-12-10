@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EnergieEros")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+db26f1cff1d1da6123a5a622f6a6271037465d92")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a89fe2057b54de8129a846d2ca3a8aad16e9e902")]
 [assembly: System.Reflection.AssemblyProductAttribute("EnergieEros")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EnergieEros")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

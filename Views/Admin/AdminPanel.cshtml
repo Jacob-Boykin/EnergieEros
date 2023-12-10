@@ -1,10 +1,37 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <title></title>
+    <title>Admin Panel</title>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/adminPanel.js" asp-append-version="true"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(function () {
+            hideProductsButtons();
+        });
+    </script>
 </head>
 <body>
+    <h1>Admin Panel</h1>
 
+    <button onclick="viewOrders()">View Orders</button>
+    <div id="ordersTable"></div>
+
+    <div id="productsButtons" display="none">
+        <button onclick="addProduct()" >Add Product</button>
+    </div>
+    <button onclick="viewProducts()">View Products</button>
+    <div id="products"></div>
+
+    <button onclick="viewUsers()">View Users</button>
+    <div id="users"></div>
+
+
+    <!-- Table placeholders for displaying fetched data -->
+    <div id="ordersTable"></div>
+    <div id="productsTable"></div>
+    <div id="usersTable"></div>
+
+    <!-- Additional modals, forms, or sections to manage product edits, role assignments, etc. -->
 </body>
 </html>

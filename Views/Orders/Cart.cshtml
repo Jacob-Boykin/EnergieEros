@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Cart</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/cart.js" asp-append-version="true"></script>
+    <script>
+        // Load the cart items when the page loads
+        $(function () {
+            fetchCartItems();
+            fetchTotal();
+        });
+    </script>
+</head>
+<body>
+    <!-- Display area for cart items -->
+    <div id="cart-items"></div>
+
+    <div>
+        Total: <span id="total"></span>
+    </div>
+
+    <div>
+        <button onclick="checkout()">Checkout</button>
+    </div>
+</body>
+</html>
