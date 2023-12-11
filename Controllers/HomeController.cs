@@ -123,8 +123,22 @@ namespace EnergieEros.Controllers
                 }
             }
 
-            var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
+            string role;
+
+            if (model.IsAdmin)
+            {
+                System.Diagnostics.Debug.WriteLine("Admin registration");
+                role = "Admin";
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("Customer registration");
+                role = "Customer";
+            }
+
+            var user = new ApplicationUser { UserName = model.Email, Email = model.Email, Role = role, ReversiblePassword = model.Password };
             var result = await _userManager.CreateAsync(user, model.Password);
+
 
             if (result.Succeeded)
             {
@@ -243,6 +257,12 @@ namespace EnergieEros.Controllers
             }
 
             return Content("User not found");
+        }
+
+        [HttpGet("api/user/role")]
+        public IActionResult CheckUserRole()
+        {
+            return Ok(new { IsAdmin = User.IsInRole("Admin") });
         }
 
     }

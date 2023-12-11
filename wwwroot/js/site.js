@@ -59,19 +59,23 @@ async function fetchProducts() {
 // Function to generate product HTML
 function generateProductHTML(product) {
     return `
-        <div class="product">
-            <img src="${product.imageUrl}" alt="${product.name}">
-            <h2>${product.name}</h2>
-            <p>${product.description}</p>
-            <span class="price">${product.price}</span>
-            <button class="nav-link text-dark add-to-cart-btn"
-                    data-product-id="${product.productId}"
-                    data-name="${product.name}"
-                    data-description="${product.description}"
-                    data-price="${product.price}"
-                    data-quantity="1">
-                Add to Cart
-            </button>
+        <div class="product-card">
+            <div class="product-image">
+                <img src="${product.imageUrl}" alt="${product.name}">
+            </div>
+            <div class="product-info">
+                <h2>${product.name}</h2>
+                <p>${product.description}</p>
+                <span class="price">${product.price}</span>
+                <button class="add-to-cart-btn"
+                        data-product-id="${product.productId}"
+                        data-name="${product.name}"
+                        data-description="${product.description}"
+                        data-price="${product.price}"
+                        data-quantity="1">
+                    Add to Cart
+                </button>
+            </div>
         </div>
     `;
 }
