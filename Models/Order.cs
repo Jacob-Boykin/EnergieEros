@@ -27,12 +27,27 @@ namespace EnergieEros.Models
         }
 
         public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderProduct> OrderProducts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Order>()
                 .Property(o => o.OrderId)
-                .ValueGeneratedOnAdd(); // Configure auto-generated order IDs
+                .ValueGeneratedOnAdd();
+
+            // Define the many-to-many relationship between Order and Product
+            modelBuilder.Entity<OrderProduct>()
+                .HasKey(op => new { op.OrderId, op.ProductId });
+
+            modelBuilder.Entity<OrderProduct>()
+                .HasOne(op => op.Order)
+                .WithMany(o => o.OrderProducts)
+                .HasForeignKey(op => op.OrderId);
+
+            modelBuilder.Entity<OrderProduct>()
+                .HasOne(op => op.Product)
+                .WithMany() // Assuming Product does not have a navigation property to OrderProduct
+                .HasForeignKey(op => op.ProductId);
         }
 
         public async Task<int?> AddOrderAsync(Order order)

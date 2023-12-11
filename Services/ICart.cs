@@ -13,6 +13,7 @@ namespace EnergieEros.Services
         Task<decimal> GetTotalAsync(string id);
         Task<int> GetCountAsync(string id);
         Task<bool> CheckoutAsync(string id);
+        Task UpdateCartItemAsync(int cartItemId, CartItem cartItem);
     }
 
     public interface ICartRepository
@@ -24,5 +25,6 @@ namespace EnergieEros.Services
         Task<decimal> GetTotalAsync(string id);
         Task<int> GetCountAsync(string id);
         Task<bool> CheckoutAsync(string id);
+        Task UpdateCartItem(int cartItemId, CartItem cartItem);
     }
 }
