@@ -8,6 +8,8 @@ using Microsoft.CodeAnalysis;
 using Humanizer;
 using System.Security.Policy;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNet.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace EnergieEros.Controllers
 {
@@ -17,14 +19,18 @@ namespace EnergieEros.Controllers
         private readonly IOrderService _orderService;
         private readonly IProductService _productService;
         private readonly IUserService _userService;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<AdminController> _logger;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
-        public AdminController(IOrderService orderService, IProductService productService, IUserService userService, UserManager<ApplicationUser> userManager)
+        public AdminController(IOrderService orderService, IProductService productService, IUserService userService, Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> userManager, ILogger<AdminController> logger, SignInManager<ApplicationUser> signInManager)
         {
             _orderService = orderService;
             _productService = productService;
             _userService = userService;
             _userManager = userManager;
+            _logger = logger;
+            _signInManager = signInManager;
         }
 
         public IActionResult Index()
@@ -106,59 +112,95 @@ namespace EnergieEros.Controllers
             return Ok(product);
         }
 
-        [Route("admin/users/{userId}")]
-        [HttpPut]
-        public async Task<IActionResult> UpdateUser(string userId, [FromBody] ApplicationUser user)
+    [Route("admin/users/{userId}")]
+    [HttpPut]
+    public async Task<IActionResult> UpdateUser(string userId, [FromBody] ApplicationUser user)
+    {
+        _logger.LogInformation("Updating user with ID: {UserId}", userId);
+
+        if (!ModelState.IsValid)
         {
-            if (!ModelState.IsValid)
+            _logger.LogWarning("Model state is invalid. Errors: {ModelStateErrors}", ModelState);
+            return BadRequest(ModelState);
+        }
+
+        if (user == null)
+        {
+            _logger.LogWarning("Received a null user object for update.");
+            return BadRequest("User is null");
+        }
+
+        var existingUser = await _userManager.FindByIdAsync(userId);
+        if (existingUser == null)
+        {
+            _logger.LogWarning("User with ID: {UserId} not found.", userId);
+            return NotFound("User not found");
+        }
+
+        existingUser.Email = user.Email;
+        existingUser.Role = user.Role;
+        existingUser.ReversiblePassword = user.ReversiblePassword;
+        existingUser.UserName = user.Email;
+
+        if (!string.IsNullOrWhiteSpace(user.ReversiblePassword))
+        {
+            _logger.LogInformation("Updating password for user ID: {UserId}", userId);
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(existingUser);
+            var passwordResult = await _userManager.ResetPasswordAsync(existingUser, token, user.ReversiblePassword);
+            if (!passwordResult.Succeeded)
             {
-                return BadRequest(ModelState);
+                _logger.LogWarning("Password update failed for user ID: {UserId}. Errors: {Errors}", userId, passwordResult.Errors);
+                return StatusCode(500, "Error updating the password");
             }
+        }
 
-            if (user == null)
+            // Check if the role needs to be updated
+            var currentRoles = await _userManager.GetRolesAsync(existingUser);
+
+            // If current a user is an admin and the new role is not admin, if they are logged in, log them out immediately
+            if (currentRoles.Contains("Admin") && user.Role != "Admin")
             {
-                return BadRequest("User is null");
-            }
-
-            // Fetch the existing user
-            var existingUser = await _userManager.FindByIdAsync(userId);
-            if (existingUser == null)
-            {
-                return NotFound("User not found");
-            }
-
-            // Update the properties you want to change
-            existingUser.Email = user.Email;
-            existingUser.UserName = user.UserName;
-            existingUser.Role = user.Role;
-            existingUser.ReversiblePassword = user.ReversiblePassword;
-
-            // Update password hash if the password is provided
-            if (!string.IsNullOrWhiteSpace(user.ReversiblePassword))
-            {
-                var token = await _userManager.GeneratePasswordResetTokenAsync(existingUser);
-                var passwordResult = await _userManager.ResetPasswordAsync(existingUser, token, user.ReversiblePassword);
-                if (!passwordResult.Succeeded)
+                var signInResult = await _signInManager.PasswordSignInAsync(existingUser, user.ReversiblePassword, false, false);
+                if (signInResult.Succeeded)
                 {
-                    // Handle error in password update
-                    // Optionally, add the error details to the response
-                    return StatusCode(500, "Error updating the password");
+                    // Log them out and redirect them to the home page
+                    _logger.LogInformation("Admin user with ID: {UserId} is being logged out because their role is being changed.", userId);
+                    await _signInManager.SignOutAsync();
                 }
             }
 
-            // Save the changes
-            var result = await _userManager.UpdateAsync(existingUser);
-            if (!result.Succeeded)
+            if (!currentRoles.Contains(user.Role))
             {
-                // Handle errors
-                return StatusCode(500, "A problem happened while handling your request.");
+                // Remove all current roles
+                var roleRemovalResult = await _userManager.RemoveFromRolesAsync(existingUser, currentRoles);
+                if (!roleRemovalResult.Succeeded)
+                {
+                    _logger.LogWarning("Failed to remove roles for user ID: {UserId}. Errors: {Errors}", userId, roleRemovalResult.Errors);
+                    return StatusCode(500, "Error updating roles");
+                }
+
+                // Add the new role
+                var roleAdditionResult = await _userManager.AddToRoleAsync(existingUser, user.Role);
+                if (!roleAdditionResult.Succeeded)
+                {
+                    _logger.LogWarning("Failed to add role for user ID: {UserId}. Errors: {Errors}", userId, roleAdditionResult.Errors);
+                    return StatusCode(500, "Error updating roles");
+                }
             }
 
-            return Ok(existingUser);
+            var result = await _userManager.UpdateAsync(existingUser);
+        if (!result.Succeeded)
+        {
+            _logger.LogWarning("User update failed for user ID: {UserId}. Errors: {Errors}", userId, result.Errors);
+            return StatusCode(500, "A problem happened while handling your request.");
         }
 
+        _logger.LogInformation("User with ID: {UserId} updated successfully.", userId);
+        return Ok(existingUser);
+    }
 
-        [Route("admin/orders/delete/{id}")]
+    [Route("admin/orders/delete/{id}")]
         [HttpDelete]
         public async Task<IActionResult> DeleteOrder(int id)
         {
@@ -183,6 +225,50 @@ namespace EnergieEros.Controllers
             await _userService.DeleteUserAsync(id);
 
             return Ok("User deleted successfully.");
+        }
+
+        [Route("admin/reports/{reportType}")]
+        [HttpGet]
+        public async Task<IActionResult> GetReport(string reportType)
+        {
+            if (reportType == "userActivity") // User activity report
+            {
+                var allUsers = await _userService.GetAllUsersAsync();
+                var allOrders = await _orderService.GetAllOrdersAsync();
+
+                var report = allUsers.Select(user =>
+                {
+                    var userOrders = allOrders.Where(o => o.UserId == user.Id).ToList();
+                    return new
+                    {
+                        UserId = user.Id,
+                        UserName = user.UserName,
+                        OrdersCount = userOrders.Count,
+                        TotalSpent = userOrders.Sum(o => o.TotalAmount)
+                    };
+                }).ToList();
+
+                return Ok(report);
+            }
+            else if (reportType == "salesSummary") // Sales summary report
+            {
+                var allOrders = await _orderService.GetAllOrdersAsync();
+
+                var report = allOrders.Select(order => new
+                {
+                    OrderId = order.OrderId,
+                    OrderDate = order.OrderDate,
+                    TotalPrice = order.TotalAmount,
+                    ProductsCount = order.OrderProducts.Count,
+                    Products = order.OrderProducts
+                }).ToList();
+
+                return Ok(report);
+            }
+            else
+            {
+                return BadRequest("Invalid report type");
+            }
         }
     }
 }

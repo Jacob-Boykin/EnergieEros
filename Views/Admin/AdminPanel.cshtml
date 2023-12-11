@@ -3,8 +3,8 @@
 <head>
     <title>Admin Panel</title>
     <link rel="stylesheet" href="~/css/site.css" />
+    <script src="~/js/adminPanel.js" defer asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/adminPanel.js" asp-append-version="true"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(function () {
@@ -14,11 +14,14 @@
 </head>
 <body>
     <h1>Admin Panel</h1>
+    <div class="disclaimer">
+        <p style="color: red;">If you change your role from Admin to Customer, you will be logged out. Please click another page afterwards to avoid crashing.</p>
+    </div>
 
     <button onclick="viewOrders()">View Orders</button>
 
     <div id="productsButtons" style="display: none;">
-        <button onclick="addProduct()" >Add Product</button>
+        <button onclick="openAddProductModal()" >Add Product</button>
     </div>
     <button onclick="viewProducts()">View Products</button>
 
@@ -36,7 +39,7 @@
     <div id="productEditModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeProductModal()">&times;</span>
-            <h2>Edit Product</h2>
+            <h2 id="productModalTitle">Edit Product</h2> <!-- Title element with ID -->
             <form id="productEditForm">
                 <!-- The rest of your form inputs go here -->
                 <input type="hidden" id="editProductId" />
@@ -48,25 +51,6 @@
                 <input type="text" id="editProductDescription" name="description" required />
                 <label for="editProductImage">Image:</label>
                 <input type="text" id="editProductImageUrl" name="image" required />
-                <input type="submit" value="Save" />
-            </form>
-        </div>
-    </div>
-
-    <!-- Product Add Modal -->
-    <div id="productAddModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeProductModal()">&times;</span>
-            <h2>Add Product</h2>
-            <form id="productAddForm">
-                <label for="addProductName">Name:</label>
-                <input type="text" id="addProductName" name="name" required />
-                <label for="addProductPrice">Price:</label>
-                <input type="text" id="addProductPrice" name="price" required />
-                <label for="addProductDescription">Description:</label>
-                <input type="text" id="addProductDescription" name="description" required />
-                <label for="addProductImage">Image:</label>
-                <input type="text" id="addProductImageUrl" name="image" required />
                 <input type="submit" value="Save" />
             </form>
         </div>
@@ -141,6 +125,5 @@
             <!-- Report output will be displayed here -->
         </div>
     </div>
-
 </body>
 </html>

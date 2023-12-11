@@ -7,6 +7,22 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EnergieEros.styles.css" asp-append-version="true" />
+    <script>
+        function checkUserRole() {
+            fetch('/api/user/role')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.isAdmin) {
+                        // Hide the Admin Panel link
+                        document.querySelector('.admin-panel-link').style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error checking user role:', error));
+        }
+
+        // Check every 30 seconds (or choose an appropriate interval)
+        setInterval(checkUserRole, 30000);
+    </script>
 </head>
 <body>
     <header>
@@ -47,7 +63,7 @@
                         @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Admin" asp-action="Index">AdminPanel</a>
+                                <a class="nav-link text-dark admin-panel-link" asp-area="" asp-controller="Admin" asp-action="Index">AdminPanel</a>
                             </li>
                         }
                     </ul>

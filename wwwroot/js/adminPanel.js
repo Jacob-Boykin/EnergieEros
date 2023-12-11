@@ -97,7 +97,6 @@ function displayProducts(products) {
     productsDiv.innerHTML = table;
 }
 
-
 function viewUsers() {
     hideProductsButtons();
     document.getElementById('ordersTable').innerHTML = '';
@@ -176,8 +175,9 @@ function editUser(userId) {
         })
         .then(user => {
             if (user) {
+                // Set the userId in the hidden input field
+                document.getElementById('editUserId').value = userId;
                 document.getElementById('editUserEmail').value = user.email || '';
-                // Assuming 'role' and 'reversiblePassword' are correct property names
                 document.getElementById('editUserIsAdmin').value = user.role || '';
                 document.getElementById('editUserPassword').value = user.reversiblePassword || '';
                 document.getElementById('userEditModal').style.display = 'block';
@@ -188,7 +188,6 @@ function editUser(userId) {
         })
         .catch(error => console.error('Error fetching user:', error));
 }
-
 
 function deleteOrder(orderId) {
     fetch(`/admin/orders/delete/${orderId}`, {
@@ -259,19 +258,19 @@ function editProduct(productId) {
         .catch(error => console.error('Error fetching product:', error));
 }
 
-function addProduct() {
-    openAddProductModal();
-}
+let currentOperation = 'add'; // Default operation
 
 function openEditProductModal() {
     currentOperation = 'edit';
-    document.getElementById('productModal').style.display = 'block';
+    document.getElementById('productModalTitle').innerText = 'Edit Product';
+    document.getElementById('productEditModal').style.display = 'block';
 }
 
 function openAddProductModal() {
     currentOperation = 'add';
     clearProductForm();
-    document.getElementById('productModal').style.display = 'block';
+    document.getElementById('productModalTitle').innerText = 'Add Product';
+    document.getElementById('productEditModal').style.display = 'block';
 }
 
 function clearProductForm() {
@@ -294,9 +293,9 @@ function closeUserModal() {
     document.getElementById('userEditModal').style.display = 'none';
 }
 
-document.getElementById('productForm').addEventListener('submit', function (event) {
+document.getElementById('productEditForm').addEventListener('submit', function (event) {
     event.preventDefault();
-    const productData = collectProductFormData(); // Collect data from form
+    const productData = collectProductFormData();
 
     if (currentOperation === 'add') {
         addProduct(productData);
@@ -313,19 +312,23 @@ function collectProductFormData() {
     const productImageUrl = document.getElementById('editProductImageUrl').value;
 
     const productData = {
-            productId: productId,
             name: productName,
             description: productDescription,
             price: productPrice,
             imageUrl: productImageUrl
-        };
+    };
+
+    if (currentOperation === 'edit') {
+        productData.productId = productId;
+    }
 
     return productData;
 }
 
 function addProduct(productData) {
     // POST request to add a new product
-fetch('/api/products/add', {
+    console.log('Product data:', JSON.stringify(productData))
+    fetch('/api/products/add', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -366,7 +369,6 @@ function updateProduct(productData) {
         })
         .catch(error => console.error('Error saving product:', error));
 }
-
 
 document.getElementById('orderEditForm').addEventListener('submit', function (event) {
     event.preventDefault();
@@ -415,6 +417,9 @@ document.getElementById('userEditForm').addEventListener('submit', function (eve
         role: role
     };
 
+    console.log('User data:', JSON.stringify(userData))
+    console.log('User ID:', userId)
+
     fetch(`/admin/users/${userId}`, {
         method: 'PUT',
         headers: {
@@ -450,7 +455,7 @@ function closeSuccessModal() {
 
 function generateReport() {
     const reportType = document.getElementById("reportType").value;
-    fetch(`/api/reports/${reportType}`)
+    fetch(`/admin/reports/${reportType}`)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
@@ -469,9 +474,6 @@ function generateReport() {
         })
         .catch(error => {
             console.error('Error fetching report:', error);
-            // Display error modal
-            document.getElementById('errorModal').style.display = 'block';
-            document.getElementById('errorModalMessage').innerText = 'Error generating report';
         });
 }
 
@@ -501,4 +503,3 @@ function createTableFromData(data) {
     table += '</table>';
     return table;
 }
-

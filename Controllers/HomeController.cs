@@ -259,6 +259,12 @@ namespace EnergieEros.Controllers
             return Content("User not found");
         }
 
+        [HttpGet("api/user/role")]
+        public IActionResult CheckUserRole()
+        {
+            return Ok(new { IsAdmin = User.IsInRole("Admin") });
+        }
+
     }
 
     public class ChatMessage
