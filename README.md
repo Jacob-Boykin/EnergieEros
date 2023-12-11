@@ -1,5 +1,6 @@
 # EnergieEros
-Final Project for CS391. Me and one other student are creating a webstore with the intention to sell jewelry for a client.
+Final Project for CS391 at the University of Alabama for Fall 2023. 
+Me (Jacob Boykin) and one other student (Haylee Pulisciano) are creating a webstore with the intention to sell jewelry for a client.
 
 It is important to note that we worked together on the same account for the entire beginning of the website creation so the commits don't show accurate contributions.
 
