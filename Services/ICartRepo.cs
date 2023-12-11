@@ -129,7 +129,6 @@ public class CartRepository : ICartRepository
         }
     }
 
-
     public async Task UpdateCartItem(int cartItemId, CartItem cartItem)
     {
         var cartItemToUpdate = await _context.CartItems.FirstOrDefaultAsync(c => c.Id == cartItemId);

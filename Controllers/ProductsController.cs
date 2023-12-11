@@ -39,6 +39,7 @@ public class ProductsApiController : ControllerBase
         return product;
     }
 
+    [Route("add")]
     [HttpPost]
     public async Task<ActionResult<Product>> AddProduct([FromBody] Product product)
     {
@@ -52,6 +53,7 @@ public class ProductsApiController : ControllerBase
         return CreatedAtAction(nameof(GetProductById), product);
     }
 
+    [Route("update")]
     [HttpPut]
     public async Task<ActionResult<Product>> UpdateProduct([FromBody] Product product)
     {
