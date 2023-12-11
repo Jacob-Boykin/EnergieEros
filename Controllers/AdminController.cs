@@ -258,9 +258,7 @@ namespace EnergieEros.Controllers
                 {
                     OrderId = order.OrderId,
                     OrderDate = order.OrderDate,
-                    TotalPrice = order.TotalAmount,
-                    ProductsCount = order.OrderProducts.Count,
-                    Products = order.OrderProducts
+                    TotalPrice = order.TotalAmount
                 }).ToList();
 
                 return Ok(report);
