@@ -38,5 +38,10 @@ namespace EnergieEros.Services
         {
             await _orderRepository.DeleteOrderAsync(id);
         }
+
+        public async Task<bool> OrderExistsAsync(int id)
+        {
+            return await _orderRepository.OrderExistsAsync(id);
+        }
     }
 }

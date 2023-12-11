@@ -5,17 +5,20 @@ using System.Threading.Tasks;
 using EnergieEros.Data;
 using EnergieEros.Models;
 using EnergieEros.Services;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 
 public class CartRepository : ICartRepository
 {
     private readonly EnergieDbContext _context;
-    private readonly OrderDbContext _orderDbContext;
+    private readonly ILogger<CartRepository> _logger;   
+    private readonly IOrderService _orderService;
 
-    public CartRepository(EnergieDbContext energieDbContext, OrderDbContext orderDbContext)
+    public CartRepository(EnergieDbContext energieDbContext, IOrderService orderService, ILogger<CartRepository> logger)
     {
         _context = energieDbContext;
-        _orderDbContext = orderDbContext;
+        _orderService = orderService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<CartItem>> GetCartItemsAsync(string userId)
@@ -70,36 +73,50 @@ public class CartRepository : ICartRepository
 
     public async Task<bool> CheckoutAsync(string userId)
     {
-        var cartItems = await _context.CartItems.Where(c => c.UserId == userId).ToListAsync();
-        _context.CartItems.RemoveRange(cartItems);
-        await _context.SaveChangesAsync();
-
-        var orderProducts = new List<OrderProduct>();
-        var order = new Order
+        try
         {
-            UserId = userId,
-            OrderDate = DateTime.Now,
-            TotalAmount = await GetTotalAsync(userId)
-        };
-
-        // Add order to the database and get the generated OrderId
-        var generatedOrderId = await _orderDbContext.AddOrderAsync(order);
-
-        foreach (var cartItem in cartItems)
-        {
-            var orderProduct = new OrderProduct
+            var cartItems = await _context.CartItems.Where(c => c.UserId == userId).ToListAsync();
+            if (cartItems.Count == 0)
             {
-                ProductId = cartItem.ProductId,
-                OrderId = generatedOrderId ?? 0, // Use the generated OrderId
+                // No items in the cart to checkout
+                return false;
+            }
+
+            var totalAmount = await GetTotalAsync(userId);
+
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.Now,
+                TotalAmount = totalAmount
             };
-            orderProducts.Add(orderProduct);
+
+            // Use the order service to add the order
+            await _orderService.AddOrderAsync(order);
+
+            // Clear the cart items
+            _context.CartItems.RemoveRange(cartItems);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
+        catch (Exception ex)
+        {
+            // Log the exception
+            _logger.LogError("Checkout failed for user {UserId}: {Exception}", userId, ex);
 
-        // Update the order with the order products
-        order.OrderProducts = orderProducts;
-        await _orderDbContext.SaveChangesAsync();
-
-        return true; // Assuming success means the order was created and products were added
+            return false;
+        }
     }
 
+
+    public async Task UpdateCartItem(int cartItemId, CartItem cartItem)
+    {
+        var cartItemToUpdate = await _context.CartItems.FirstOrDefaultAsync(c => c.Id == cartItemId);
+        if (cartItemToUpdate != null)
+        {
+            cartItemToUpdate.Quantity = cartItem.Quantity;
+            await _context.SaveChangesAsync();
+        }
+    }
 }

@@ -17,7 +17,9 @@ namespace EnergieEros.Services
 
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
-            return await _context.Orders.ToListAsync();
+            return await _context.Orders
+                                 .Include(o => o.OrderProducts)
+                                 .ToListAsync();
         }
 
         public async Task<Order> GetOrderByIdAsync(int id)
@@ -45,6 +47,11 @@ namespace EnergieEros.Services
                 _context.Orders.Remove(order);
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<bool> OrderExistsAsync(int id)
+        {
+            return await _context.Orders.AnyAsync(o => o.OrderId == id);
         }
     }
 }

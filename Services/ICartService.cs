@@ -46,4 +46,9 @@ public class CartService : ICartService
     {
         return _cartRepository.CheckoutAsync(Id);
     }
+
+    public Task UpdateCartItemAsync(int cartItemId, CartItem cartItem)
+    {
+        return _cartRepository.UpdateCartItem(cartItemId, cartItem);
+    }
 }

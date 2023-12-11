@@ -94,6 +94,8 @@ function generateProductHTML(product) {
 }
 
 // Function to render products on the page
+var isEventListenerAttached = false;
+
 async function renderProducts() {
     const productContainer = document.getElementById('productContainer');
     const products = await fetchProducts();
@@ -104,4 +106,19 @@ async function renderProducts() {
     }
 
     productContainer.innerHTML = products.map(generateProductHTML).join('');
+
+    // Attach event listener only once
+    if (!isEventListenerAttached) {
+        productContainer.addEventListener('click', function (event) {
+            if (event.target && event.target.matches('.add-to-cart-btn')) {
+                const button = event.target;
+                const productId = button.dataset.productId;
+                const quantity = 1; // or any other logic to determine quantity
+
+                addToCart(productId, quantity);
+            }
+        });
+        isEventListenerAttached = true;
+    }
 }
+

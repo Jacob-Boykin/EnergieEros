@@ -37,7 +37,7 @@ function displayOrders(orders) {
             <tr>
                 <td>${order.orderId}</td>
                 <td>${order.orderDate}</td>
-                <td>${order.total}</td>
+                <td>$${order.totalAmount}</td>
                 <td>
                     <button onclick="editOrder(${order.orderId})">Edit</button>
                     <button onclick="deleteOrder(${order.orderId})">Delete</button>
@@ -125,12 +125,13 @@ function displayUsers(users) {
         return;
     }
 
-    let table = '<table><tr><th>User ID</th><th>Email</th><th>Actions</th></tr>';
+    let table = '<table><tr><th>User ID</th><th>Email</th><th>Role</th><th>Actions</th></tr>';
     users.forEach(user => {
         table += `
             <tr>
                 <td>${user.id}</td>
                 <td>${user.email}</td>
+                <td>${user.role}</td>
                 <td>
                     <button onclick="editUser('${user.id}')">Edit</button>
                     <button onclick="deleteUser('${user.id}')">Delete</button>
