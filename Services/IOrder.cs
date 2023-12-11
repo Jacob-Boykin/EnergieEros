@@ -11,6 +11,7 @@ namespace EnergieEros.Services
         Task AddOrderAsync(Order order);
         Task UpdateOrderAsync(Order order);
         Task DeleteOrderAsync(int id);
+        Task<bool> OrderExistsAsync(int id);
     }
 
     public interface IOrderService
@@ -20,5 +21,6 @@ namespace EnergieEros.Services
         Task AddOrderAsync(Order order);
         Task UpdateOrderAsync(Order order);
         Task DeleteOrderAsync(int id);
+        Task<bool> OrderExistsAsync(int id);
     }
 }

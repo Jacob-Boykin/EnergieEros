@@ -37,7 +37,7 @@ function displayOrders(orders) {
             <tr>
                 <td>${order.orderId}</td>
                 <td>${order.orderDate}</td>
-                <td>${order.total}</td>
+                <td>$${order.totalAmount}</td>
                 <td>
                     <button onclick="editOrder(${order.orderId})">Edit</button>
                     <button onclick="deleteOrder(${order.orderId})">Delete</button>

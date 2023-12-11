@@ -5,18 +5,19 @@ using System.Threading.Tasks;
 using EnergieEros.Data;
 using EnergieEros.Models;
 using EnergieEros.Services;
+using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.EntityFrameworkCore;
 
 public class CartRepository : ICartRepository
 {
     private readonly EnergieDbContext _context;
-    private readonly OrderDbContext _orderDbContext;
     private readonly ILogger<CartRepository> _logger;   
+    private readonly IOrderService _orderService;
 
-    public CartRepository(EnergieDbContext energieDbContext, OrderDbContext orderDbContext, ILogger<CartRepository> logger)
+    public CartRepository(EnergieDbContext energieDbContext, IOrderService orderService, ILogger<CartRepository> logger)
     {
         _context = energieDbContext;
-        _orderDbContext = orderDbContext;
+        _orderService = orderService;
         _logger = logger;
     }
 
@@ -72,62 +73,42 @@ public class CartRepository : ICartRepository
 
     public async Task<bool> CheckoutAsync(string userId)
     {
-        using (var transaction = await _context.Database.BeginTransactionAsync())
+        try
         {
-            try
+            var cartItems = await _context.CartItems.Where(c => c.UserId == userId).ToListAsync();
+            if (cartItems.Count == 0)
             {
-                var cartItems = await _context.CartItems.Where(c => c.UserId == userId).ToListAsync();
-                if (cartItems.Count == 0)
-                {
-                    // No items in the cart to checkout
-                    return false;
-                }
-
-                var order = new Order
-                {
-                    UserId = userId,
-                    OrderDate = DateTime.Now,
-                    TotalAmount = await GetTotalAsync(userId)
-                };
-
-                // Add order to the database
-                _orderDbContext.Orders.Add(order);
-                await _orderDbContext.SaveChangesAsync();
-
-                foreach (var cartItem in cartItems)
-                {
-                    var orderProduct = new OrderProduct
-                    {
-                        ProductId = cartItem.ProductId,
-                        OrderId = order.OrderId
-                    };
-                    _orderDbContext.OrderProducts.Add(orderProduct);
-                }
-
-                // Save the order products
-                await _orderDbContext.SaveChangesAsync();
-
-                // Remove cart items
-                _context.CartItems.RemoveRange(cartItems);
-                await _context.SaveChangesAsync();
-
-                // Commit the transaction
-                await transaction.CommitAsync();
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                _logger.LogError("Checkout failed for user {UserId}: {Exception}", userId, ex);
-
-                // Rollback the transaction
-                await transaction.RollbackAsync();
-
+                // No items in the cart to checkout
                 return false;
             }
+
+            var totalAmount = await GetTotalAsync(userId);
+
+            var order = new Order
+            {
+                UserId = userId,
+                OrderDate = DateTime.Now,
+                TotalAmount = totalAmount
+            };
+
+            // Use the order service to add the order
+            await _orderService.AddOrderAsync(order);
+
+            // Clear the cart items
+            _context.CartItems.RemoveRange(cartItems);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            // Log the exception
+            _logger.LogError("Checkout failed for user {UserId}: {Exception}", userId, ex);
+
+            return false;
         }
     }
+
 
     public async Task UpdateCartItem(int cartItemId, CartItem cartItem)
     {
