@@ -41,6 +41,19 @@ async function sendMessageToChatAPI(message) {
     }
 }
 
+document.addEventListener('DOMContentLoaded', function () {
+    // Check if the user is authenticated before fetching products
+    fetchUserId()
+    .then(() => {
+        // Load the products
+        renderProducts();
+    })
+    .catch(error => {
+        console.error('User not authenticated:', error);
+        const productContainer = document.getElementById('productContainer');
+        productContainer.innerHTML = '<p>Please <a href="/Identity/Account/Login">login</a> to view products</p>';
+        });
+});
 
 // Fetch products from the API endpoint
 async function fetchProducts() {
