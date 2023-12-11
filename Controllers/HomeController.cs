@@ -5,10 +5,6 @@ using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 
-
-
-
-
 namespace EnergieEros.Controllers
 {
     public class HomeController : Controller
